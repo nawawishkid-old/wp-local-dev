@@ -1,0 +1,45 @@
+version: "3.6"
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - wp-local-dev
+
+  php:
+    build: ./php
+    restart: on-failure
+    depends_on:
+      - mysql
+    networks:
+      - wp-local-dev
+    volumes:
+      - ~/projects-2020/guscar.com/website/bedrock:/usr/share/nginx/guscar.com
+
+  mysql:
+    image: mariadb
+    restart: on-failure
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-wordpress}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    networks:
+      - wp-local-dev
+
+  adminer:
+    image: adminer
+    restart: on-failure
+    environment:
+      VIRTUAL_HOST: adminer.wp-local-dev.local
+      LETSENCRYPT_HOST: adminer.wp-local-dev.local
+    networks:
+      - wp-local-dev
+    ports:
+      - 9999:8080
+
+networks:
+  wp-local-dev:
+    name: wp-local-dev
